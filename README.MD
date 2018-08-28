@@ -5,7 +5,6 @@ It uses some complex Kotlin features and combine them in easy to use way.
 It is just a library, it does not do any byte code manipulation and it does not
 require you to install any plugins to ide or your build tool. 
 Just add it as a dependency to your project and you are ready to go.
-It is also possible to enhance the lib with your custom matchers.
 
 ### Usage
 Best shown with examples. 
@@ -56,14 +55,14 @@ objectToMatch.match<Unit> {
 
 #### Matching of lists
 There is some special methods for lists.
-Use next available object, or actual values to define patterns over list: 
+Use next available objects, or actual values to define patterns over list: 
 * `head` - for a first item in list
 * `mid` - for a second and next items 
 * `tail` - for a list of remaining items, may be empty list
 * `nil`, `end` - for the end of list
 
 See example bellow:
-```
+```kotlin
 import ua.kurinnyi.kotlin.patternmatching.ListPatterMatching.matchList
 import ua.kurinnyi.kotlin.patternmatching.end
 import ua.kurinnyi.kotlin.patternmatching.head
@@ -85,38 +84,80 @@ Function matchList has two generic parameters `matchList<LIST_TYPE, RESULT>`.
 First one is the type of the list and second is returned type which can be `Unit`. 
 In most cases this parameters can be derived automatically and omitted as in example above.  
 
-### Adding custom matchers:
-There is two ways to add some custom logic for matching functionality:
-* Simple one. Use match on `Any` or some specific type and additional predicate:
+#### Using extractors for custom behaviour:
+The library uses idea of extractors under the hood. 
+And it is also open to work with custom extractors. 
+See example bellow.
 ```kotlin
-objectToMatch.match<Unit> {
-    case<Any>().and{ yourPredicate(this)}.then { ... }                         
-    case<Any>().and{ yourOtherPredicate(this)}.then { ... }                
-}
-```
-* Enhance the lib:
-```kotlin
-import ua.kurinnyi.kotlin.patternmatching.PatternMatching
 import ua.kurinnyi.kotlin.patternmatching.PatternMatching.match
-
-//Write code like this
-fun <RESULT> PatternMatching.MatchContext<RESULT>.caseStarsInRightPosition():PatternMatching.MatcherBuilder<Any, RESULT>{
-    return PatternMatching.MatcherBuilder(this) {
-        //Here goes your custom matching logic. The object is accessible via value variable.
-        isStarsInRightPosition(value)
+import ua.kurinnyi.kotlin.patternmatching.extractors.PairExtractor
+//define the extractor by implementing PairExtractor interface
+object EMAIL : PairExtractor<String, String, String> {
+    override fun unapply(from: String): PairExtractor.Pair<String, String>? {
+        val split = from.split("@")
+        return if (split.size == 2) {
+            //return PairExtractor.Pair when string is email. Extract two parts from the email
+            PairExtractor.Pair(split.first(), split.last())
+        } else {
+            //return null if string is not email
+            null
+        }
     }
-}    
-
-//And use it like this
-objectToMatch.match<Unit>{
-    //Some out of the box matcher ... 
-    case<String>().then { ... }
-    //work along with your custom matcher
-    caseStarsInRightPosition().then { ... }
 }
+val result: String = "author@domain.com".match {
+    //match against EMAIL extractor defined above and use extracted parts
+    case(EMAIL).then { author, domain -> "Email $this consist from $author and domain $domain" }
+    otherwise { "Not email" }
+}
+//result = "Email author@domain.com consist from author and domain domain.com"
 ```
-Your matching function should return `ua.kurinnyi.kotlin.patternmatching.PatternMatching.MatcherBuilder` or its child. 
-As you can extend it too.  
+There is next interfaces for extractors:
+* *ua.kurinnyi.kotlin.patternmatching.extractors.EmptyExtractor* 
+use it when you have nothing to extract but still need to match
+```kotlin
+import ua.kurinnyi.kotlin.patternmatching.PatternMatching.match
+import ua.kurinnyi.kotlin.patternmatching.extractors.EmptyExtractor
+
+object PALINDROME : EmptyExtractor<String> {
+    override fun unapply(from: String): Boolean = from.reversed() == from
+}
+
+val result: String = "1234321".match {
+    //'this' refers to original value
+    case(PALINDROME).then { "Value $this is palindrome" }
+    otherwise { "Not palindrome" }
+}
+//result = "Value 1234321 is palindrome"
+```
+* *ua.kurinnyi.kotlin.patternmatching.extractors.SingleExtractor*
+use it when you need to match and convert value
+```kotlin
+import ua.kurinnyi.kotlin.patternmatching.PatternMatching.match
+import ua.kurinnyi.kotlin.patternmatching.extractors.SingleExtractor
+
+object INT : SingleExtractor<String, Int> {
+    override fun unapply(from: String): SingleExtractor.Single<Int>? {
+        return try {
+            SingleExtractor.Single(from.toInt())
+        } catch (e: NumberFormatException) {
+            null
+        }
+    }
+}
+
+val resultNumber: Int = "3".match {
+    //'this' refers to original value "3" and 'it' to extracted 3
+    case(INT).then { this.toInt() + it }
+    otherwise { 2 }
+}
+//result = 6
+```
+* *ua.kurinnyi.kotlin.patternmatching.extractors.PairExtractor*
+ use it when you need to match and extract two value from object. 
+ See example with EMAIL above
+* *ua.kurinnyi.kotlin.patternmatching.extractors.TripleExtractor*
+ same as previous but for three extracted values
+
 
 ### Adding to your project
 Currently this library is not yet published to any repository.

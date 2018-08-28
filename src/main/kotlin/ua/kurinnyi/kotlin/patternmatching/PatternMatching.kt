@@ -1,8 +1,10 @@
 package ua.kurinnyi.kotlin.patternmatching
 
+import ua.kurinnyi.kotlin.patternmatching.extractors.*
+
 class MatchError(value: Any?) : Exception("None of provided matchers matches: $value")
 
-object PatternMatching{
+object PatternMatching {
 
     fun <RESULT> Any?.match(patterns: MatchContext<RESULT>.() -> Unit): RESULT {
         val matchContext = MatchContext<RESULT>(this)
@@ -19,51 +21,48 @@ object PatternMatching{
             var fulfilled: Boolean = false
     ) {
 
-        inline fun <reified T> case() = MatcherBuilder<T, RESULT>(this) {
-            value is T
-        }
+        inline fun <reified T> case(): MatcherBuilderOneElement<T, T, RESULT> =
+                case(TypeCheckSingleExtractor<T>())
 
-        fun <T> case(vararg value: T) = MatcherBuilder<T, RESULT>(this) {
-            value.any { it == this.value }
-        }
+        fun caseNull() = case(NullEmptyExtractor())
 
-        fun otherwise(action: () -> RESULT) {
-            if (!fulfilled) {
-                fulfilled = true
-                result = action()
-            }
-        }
+        inline fun <reified T> case(vararg values: T): MatcherBuilderOneElement<T, T, RESULT> =
+                caseE<T, RESULT, T>(VarArgAnyMatchSingleExtractor(values))
+
+        inline fun <reified FROM, EXTRACTED> case(extractor: SingleExtractor<FROM, EXTRACTED>) =
+                caseE<FROM, RESULT, EXTRACTED>(extractor)
+
+        inline fun <reified FROM, E1, E2> case(extractor: PairExtractor<FROM, E1, E2>) =
+                caseE<FROM, RESULT, E1, E2>(extractor)
+
+        inline fun <reified FROM, E1, E2, E3> case(extractor: TripleExtractor<FROM, E1, E2, E3>) =
+                caseE<FROM, RESULT, E1, E2, E3>(extractor)
+
+        inline fun <reified FROM> case(extractor: EmptyExtractor<FROM>) = caseE(extractor)
+
+        fun otherwise(action: () -> RESULT) = case(AlwaysMatchingExtractor()).then { action() }
     }
 
-    open class AbstractMatcherBuilder<T, RESULT>(
-            open val matchContext: MatchContext<RESULT>,
-            open val predicate: () -> Boolean) {
-
-        fun and(predicate: T.() -> Boolean): MatcherBuilder<T, RESULT> {
-            return MatcherBuilder(matchContext) {
-                val value = matchContext.value as T
-                predicate() && predicate(value)
-            }
-        }
-
-        protected fun ifApplies(action: () -> RESULT) {
-            if (matchContext.fulfilled) return
-            if (predicate()) {
-                matchContext.fulfilled = true
-                matchContext.result = action()
-            }
-        }
+    class TypeCheckSingleExtractor<T> : SingleExtractor<T, T> {
+        override fun unapply(from: T): SingleExtractor.Single<T>? = SingleExtractor.Single(from)
     }
 
-    open class MatcherBuilder<T, RESULT>(
-            override val matchContext: MatchContext<RESULT>,
-            override val predicate: () -> Boolean
-    ) : AbstractMatcherBuilder<T, RESULT>(matchContext, predicate) {
+    class VarArgAnyMatchSingleExtractor<T>(private val values: Array<out T>) : SingleExtractor<T, T> {
 
-        fun then(action: T.(T) -> RESULT) = ifApplies {
-            val value = matchContext.value as T
-            value.action(value)
-        }
-
+        override fun unapply(from: T): SingleExtractor.Single<T>? =
+                values.takeIf { it.contains(from) }?.let {
+                    SingleExtractor.Single(from)
+                }
     }
+
+    class NullEmptyExtractor : EmptyExtractor<Any?> {
+
+        override fun unapply(from: Any?): Boolean = from == null
+    }
+
+    class AlwaysMatchingExtractor : EmptyExtractor<Any?> {
+
+        override fun unapply(from: Any?) = true
+    }
+
 }

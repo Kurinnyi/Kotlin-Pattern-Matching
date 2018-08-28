@@ -172,7 +172,7 @@ class ListPatterMatchingTest {
             case("Hello", mid, tail)
                     .and { _, mid, tail -> tail.contains(mid.toUpperCase()) }
                     .then { head, _, tail -> head.length + tail.size }
-            case(head, "Hi", tail).then { _,_,_ -> 4 }
+            case(head, "Hi", tail).then { _, _, _ -> 4 }
         }
         assertThat(resultInt).isEqualTo(6)
     }
@@ -182,8 +182,8 @@ class ListPatterMatchingTest {
         val list = listOf<String>("Hello", "Hi", "HI")
         val resultList = mutableListOf<String>()
         list.matchList<String, Unit> {
-            case("Hello", mid, tail).then { head, _, tail -> tail.forEach{resultList.add(it)}}
-            case(head, "Hi", tail).then { head,_,_ ->  resultList.add(head)}
+            case("Hello", mid, tail).then { head, _, tail -> tail.forEach { resultList.add(it) } }
+            case(head, "Hi", tail).then { head, _, _ -> resultList.add(head) }
         }
         assertThat(resultList).containsExactly("HI")
     }
@@ -194,7 +194,7 @@ class ListPatterMatchingTest {
         val list = listOf<String>("Hello", "Hi", "HI")
         val resultInt: Int? = list.matchList {
             case("Hello", mid, tail).then { head, _, tail -> head.length + tail.size }
-            case(head, "Hi", tail).then { _,_,_ -> null }
+            case(head, "Hi", tail).then { _, _, _ -> null }
         }
         assertThat(resultInt).isEqualTo(6)
     }
@@ -204,7 +204,7 @@ class ListPatterMatchingTest {
         val list = listOf<String>("Hello", "Hi", "HI")
         val resultInt: Int? = list.matchList {
             case("Hello", mid, tail).then { head, _, tail -> null }
-            case(head, "Hi", tail).then { _,_,_ -> 1 }
+            case(head, "Hi", tail).then { _, _, _ -> 1 }
         }
         assertThat(resultInt).isEqualTo(null)
     }
@@ -213,8 +213,8 @@ class ListPatterMatchingTest {
     fun shouldWorkWithListOfNullableValues() {
         val list = listOf<String?>("Hello", null, "HI")
         val resultInt: Int = list.matchList {
-            case("Hello", mid, tail).then { _,_,_ -> 1 }
-            case(head, null, tail).then { _,_,_ -> 2 }
+            case("Hello", mid, tail).then { _, _, _ -> 1 }
+            case(head, null, tail).then { _, _, _ -> 2 }
         }
         assertThat(resultInt).isEqualTo(1)
     }
@@ -223,8 +223,8 @@ class ListPatterMatchingTest {
     fun shouldBeAbleToUseNullToMatchAgainstIt() {
         val list = listOf<String?>("Hello", null, "HI")
         val resultInt: Int = list.matchList {
-            case("Hello", "Hi", tail).then { _,_,_ -> 1 }
-            case(head, null, tail).then { _,_,_ -> 2 }
+            case("Hello", "Hi", tail).then { _, _, _ -> 1 }
+            case(head, null, tail).then { _, _, _ -> 2 }
         }
         assertThat(resultInt).isEqualTo(2)
     }

@@ -1,13 +1,17 @@
+package ua.kurinnyi.kotlin.patternmatching
+
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import ua.kurinnyi.kotlin.patternmatching.MatchError
 import ua.kurinnyi.kotlin.patternmatching.PatternMatching.match
+import ua.kurinnyi.kotlin.patternmatching.extractors.EmptyExtractor
+import ua.kurinnyi.kotlin.patternmatching.extractors.PairExtractor
+import ua.kurinnyi.kotlin.patternmatching.extractors.SingleExtractor
 import java.lang.RuntimeException
 
 class PatternMatchingTest {
 
     @Test
-    fun shouldInvokeThenWithObjectWhenTypeMatches(){
+    fun shouldInvokeThenWithObjectWhenTypeMatches() {
         var result = "Goodbye"
         val someString = "Hello, world!"
         someString.match<Unit> {
@@ -17,18 +21,18 @@ class PatternMatchingTest {
     }
 
     @Test(expected = MatchError::class)
-    fun shouldNotInvokeThenWhenTypeNotMatches(){
+    fun shouldNotInvokeThenWhenTypeNotMatches() {
         var result = "Goodbye"
-        val someInt =  2
+        val someInt = 2
         someInt.match<Unit> {
             case<String>().then { result = this.toUpperCase() }
         }
     }
 
     @Test
-    fun shouldInvokeCorrectHandlerByType(){
+    fun shouldInvokeCorrectHandlerByType() {
         var resultString = "Goodbye"
-        var resultInt =  2
+        var resultInt = 2
         2.match<Unit> {
             case<String>().then { resultString = this.toUpperCase() }
             case<Int>().then { resultInt += this }
@@ -38,7 +42,7 @@ class PatternMatchingTest {
     }
 
     @Test
-    fun shouldBeAbleToUseInternalFieldOfObjectWhenMatch(){
+    fun shouldBeAbleToUseInternalFieldOfObjectWhenMatch() {
         var resultString = "Goodbye"
         SomeDataClass("Hello", 5).match<Unit> {
             case<String>().then { resultString = this.toUpperCase() }
@@ -49,7 +53,7 @@ class PatternMatchingTest {
     }
 
     @Test
-    fun shouldInvokeHandlerWithExactMatch(){
+    fun shouldInvokeHandlerWithExactMatch() {
         var resultString = "Goodbye"
         "Hello".match<Unit> {
             case<String>("Hello").then { resultString = it }
@@ -61,7 +65,7 @@ class PatternMatchingTest {
     }
 
     @Test
-    fun shouldInvokeHandlerWithExactMatchOfFewResult(){
+    fun shouldInvokeHandlerWithExactMatchOfFewResult() {
         var resultString = "Goodbye"
         "Hello".match<Unit> {
             case<SomeDataClass>().then { resultString = someField + someOtherField }
@@ -75,8 +79,8 @@ class PatternMatchingTest {
     }
 
     @Test
-    fun shouldReturnResultFromThenBlock(){
-        val resultNumber:Int = "Hello".match {
+    fun shouldReturnResultFromThenBlock() {
+        val resultNumber: Int = "Hello".match {
             case<SomeDataClass>().then { 1 }
             case<String>("Hello1", "Hello2").then { 2 }
             case<String>("Hello3", "Hello").then { length }
@@ -86,8 +90,8 @@ class PatternMatchingTest {
     }
 
     @Test(expected = MatchError::class)
-    fun shouldNotReturnResultFromWhenNothingMatch(){
-        val resultNumber:Int = "Hello".match {
+    fun shouldNotReturnResultFromWhenNothingMatch() {
+        val resultNumber: Int = "Hello".match {
             case<SomeDataClass>().then { 1 }
             case<String>("Hello1", "Hello2").then { 2 }
             case<String>("Hello3").then { length }
@@ -96,84 +100,84 @@ class PatternMatchingTest {
     }
 
     @Test(expected = MatchError::class)
-    fun shouldNotMatchTheObjectIfAndBlockFailsToMatch(){
+    fun shouldNotMatchTheObjectIfAndBlockFailsToMatch() {
         val setOfString = setOf<String>()
-        val resultNumber:Int = "Hello".match {
+        val resultNumber: Int = "Hello".match {
             case("Hello").and { setOfString.contains(this) }.then { it.length }
         }
     }
 
     @Test
-    fun shouldMatchTheObjectIfAndBlockMatches(){
+    fun shouldMatchTheObjectIfAndBlockMatches() {
         val setOfString = setOf("Hello")
-        val resultNumber:Int = "Hello".match {
+        val resultNumber: Int = "Hello".match {
             case("Hello").and { setOfString.contains(this) }.then { it.length }
         }
         assertThat(resultNumber).isEqualTo(5);
     }
 
     @Test
-    fun shouldNotMatchTheObjectByTypeIfAndBlockFailsToMatch(){
+    fun shouldNotMatchTheObjectByTypeIfAndBlockFailsToMatch() {
         val objectToMatch = SomeDataClass("Hello", 4)
-        val resultNumber:Int = objectToMatch.match{
+        val resultNumber: Int = objectToMatch.match {
             case<SomeOtherDataClass>().then { 3 }
-            case<SomeDataClass>().and { someField == "Goodbye" }.then { someOtherField + 1}
+            case<SomeDataClass>().and { someField == "Goodbye" }.then { someOtherField + 1 }
             otherwise { 6 }
         }
         assertThat(resultNumber).isEqualTo(6)
     }
 
     @Test
-    fun shouldMatchTheObjectByTypeIfAndBlockMatches(){
+    fun shouldMatchTheObjectByTypeIfAndBlockMatches() {
         val objectToMatch = SomeDataClass("Hello", 4)
-        val resultNumber:Int = objectToMatch.match {
+        val resultNumber: Int = objectToMatch.match {
             case<SomeOtherDataClass>().then { 3 }
-            case<SomeDataClass>().and { someField == "Hello" }.then { someOtherField + 1}
+            case<SomeDataClass>().and { someField == "Hello" }.then { someOtherField + 1 }
             otherwise { 6 }
         }
         assertThat(resultNumber).isEqualTo(5)
     }
 
     @Test
-    fun shouldNotMatchIfMultipleAndsAndSomeOfThemFailsToMatch(){
+    fun shouldNotMatchIfMultipleAndsAndSomeOfThemFailsToMatch() {
         val objectToMatch = SomeDataClass("Hello", 4)
         val resultNumber = objectToMatch.match<Int> {
             case<SomeOtherDataClass>().then { 3 }
             case<SomeDataClass>()
                     .and { someField == "Hello" }.and { someOtherField == 5 }
-                    .then { someOtherField + 1}
+                    .then { someOtherField + 1 }
             otherwise { 6 }
         }
         assertThat(resultNumber).isEqualTo(6)
     }
 
     @Test
-    fun shouldMatchIfMultipleAndsAndAllOfThemMatches(){
+    fun shouldMatchIfMultipleAndsAndAllOfThemMatches() {
         val objectToMatch = SomeDataClass("Hello", 4)
         val resultNumber = objectToMatch.match<Int> {
             case<SomeOtherDataClass>().then { 3 }
             case<SomeDataClass>().and { someField == "Hello" }
-                    .and { someOtherField == 4 }.then { someOtherField + 1}
+                    .and { someOtherField == 4 }.then { someOtherField + 1 }
             otherwise { 6 }
         }
         assertThat(resultNumber).isEqualTo(5)
     }
 
     @Test
-    fun shouldWorkWithNullableTypeIfReturnedValueIsNotNull(){
+    fun shouldWorkWithNullableTypeIfReturnedValueIsNotNull() {
         val objectToMatch = SomeDataClass("Hello", 4)
-        val resultNumber:Int? = objectToMatch.match {
+        val resultNumber: Int? = objectToMatch.match {
             case<SomeOtherDataClass>().then { null }
-            case<SomeDataClass>().then { someOtherField + 1}
+            case<SomeDataClass>().then { someOtherField + 1 }
             otherwise { null }
         }
         assertThat(resultNumber).isEqualTo(5)
     }
 
     @Test
-    fun shouldWorkWithNullableTypeIfReturnedValueIsNull(){
+    fun shouldWorkWithNullableTypeIfReturnedValueIsNull() {
         val objectToMatch = SomeDataClass("Hello", 4)
-        val resultNumber:Int? = objectToMatch.match {
+        val resultNumber: Int? = objectToMatch.match {
             case<SomeOtherDataClass>().then { 1 }
             case<SomeDataClass>().then { null }
             otherwise { 2 }
@@ -182,9 +186,9 @@ class PatternMatchingTest {
     }
 
     @Test
-    fun shouldBeAbleToUseMatchingOnNull(){
+    fun shouldBeAbleToUseMatchingOnNull() {
         val objectToMatch = null
-        val resultNumber:Int? = objectToMatch.match {
+        val resultNumber: Int? = objectToMatch.match {
             case<SomeOtherDataClass>().then { 1 }
             otherwise { 2 }
         }
@@ -192,32 +196,106 @@ class PatternMatchingTest {
     }
 
     @Test
-    fun shouldBeAbleToMatchNull(){
+    fun shouldBeAbleToMatchNull() {
         val objectToMatch = null
-        val resultNumber:Int = objectToMatch.match {
-            case(null).then {o:String? -> 1 }
+        val resultNumber: Int = objectToMatch.match {
+            caseNull().then { 1 }
             otherwise { 2 }
         }
         assertThat(resultNumber).isEqualTo(1)
     }
 
     @Test
-    fun shouldBeAbleToMatchNullInMultipleArguments(){
+    fun shouldBeAbleToMatchNullInMultipleArguments() {
         val objectToMatch = null
-        val resultNumber:Int = objectToMatch.match {
-            case(1, null, 2).then {o:Int? -> 1 }
+        val resultNumber: Int = objectToMatch.match {
+            case(1, null, 2).then { o: Int? -> 1 }
             otherwise { 2 }
         }
         assertThat(resultNumber).isEqualTo(1)
     }
 
+    @Test
+    fun shouldBeAbleToUseCustomExtractor() {
+        val resultNumber: Int = "3".match {
+            case(INT).then { this.toInt() + it }
+            otherwise { 2 }
+        }
+        assertThat(resultNumber).isEqualTo(6)
+    }
+
+    @Test
+    fun shouldNotMatchCustomExtractorIfItReturnedNull() {
+        val objectToMatch = "a"
+        val resultNumber: Int = objectToMatch.match {
+            case(INT).then { this.toInt() + it }
+            otherwise { 2 }
+        }
+        assertThat(resultNumber).isEqualTo(2)
+    }
+
+    object INT : SingleExtractor<String, Int> {
+        override fun unapply(from: String): SingleExtractor.Single<Int>? {
+            return try {
+                SingleExtractor.Single(from.toInt())
+            } catch (e: NumberFormatException) {
+                null
+            }
+        }
+    }
+
+    @Test
+    fun shouldBeAbleToUseCustomExtractorWithTwoExtractedValue() {
+        val objectToMatch = "author@domain.com"
+        val result: String = objectToMatch.match {
+            case(EMAIL).then { author, domain -> "Email $this consist from $author and domain $domain" }
+            otherwise { "Not email" }
+        }
+        assertThat(result).isEqualTo("Email author@domain.com consist from author and domain domain.com")
+    }
+
+    @Test
+    fun shouldNotMatchCustomExtractorWithTwoExtractedValueIfItReturnsNull() {
+        val objectToMatch = "authordomain.com"
+        val result: String = objectToMatch.match {
+            case(EMAIL).then { author, domain -> "Email $this consist from $author and domain $domain" }
+            otherwise { "Not email" }
+        }
+        assertThat(result).isEqualTo("Not email")
+    }
+
+    object EMAIL : PairExtractor<String, String, String> {
+        override fun unapply(from: String): PairExtractor.Pair<String, String>? {
+            val split = from.split("@")
+            return if (split.size == 2) {
+                PairExtractor.Pair(split.first(), split.last())
+            } else {
+                null
+            }
+        }
+    }
+
+    @Test
+    fun shouldBeAbleToUseCustomExtractorWithNoExtractedValue() {
+        val result: String = "1234321".match {
+            case(PALINDROME).then { "Value $this is palindrome" }
+            otherwise { "Not palindrome" }
+        }
+        assertThat(result).isEqualTo("Value 1234321 is palindrome")
+    }
+
+
+    object PALINDROME : EmptyExtractor<String> {
+        override fun unapply(from: String): Boolean = from.reversed() == from
+    }
+
+
     data class SomeDataClass(
-            val someField:String,
-            val someOtherField:Int
+            val someField: String,
+            val someOtherField: Int
     )
 
     data class SomeOtherDataClass(
-            val superField:Int
+            val superField: Int
     )
-
 }
