@@ -70,14 +70,28 @@ import ua.kurinnyi.kotlin.patternmatching.mid
 import ua.kurinnyi.kotlin.patternmatching.tail
 
 val list:List<String> = ... 
-val resultString: String = list.matchList {                                                                                          //Bellow patterns match this examples:
-    case(end).then { "empty list" }                                                                                                  // []
-    case("It is head", end).then { head -> "Exact match of head for list with one element" }                                         // ["It is head"]
-    case(head, end).and{ head -> head == "and part" }.then { head -> "Any list with one element with aditional guard" }              // ["and part"]
-    case(head, end).then { head -> "Any lists with one element that left" }                                                          // ["whatever"]
-    case(head, "this is mid", tail).then { head, mid, tail -> "Exect math of second element for list with at least two elements" }   // ["this is head", "this is mid", "whatever else"]
-    case(head, mid, end).then { head, mid -> "Any list with two elements" }                                                          // ["two", "elements"]
-    case(head, tail).then { head, tail -> "Any list with at least one element" }                                                     // ["a", "b", "c", "d"]
+//Comment bellow show examples that matches corresponding lines
+val resultString: String = list.matchList {                                                                                          
+    // []
+    case(end).then { "empty list" }   
+    
+    // ["It is head"]                                                                                               
+    case("It is head", end).then { head -> "Exact match of head for list with one element" }                                         
+    
+    // ["and part"]
+    case(head, end).and{ head -> head == "and part" }.then { head -> "Any list with one element with aditional guard" }              
+    
+    // ["whatever"]
+    case(head, end).then { head -> "Any lists with one element that left" }                                                          
+   
+    // ["this is head", "this is mid", "whatever else"]
+    case(head, "this is mid", tail).then { head, mid, tail -> "Exect math of second element for list with at least two elements" }   
+    
+    // ["two", "elements"]
+    case(head, mid, end).then { head, mid -> "Any list with two elements" }
+    
+    // ["a", "b", "c", "d"]                                                          
+    case(head, tail).then { head, tail -> "Any list with at least one element" }                                                     
 }
 ```
 Function matchList has two generic parameters `matchList<LIST_TYPE, RESULT>`. 
@@ -161,7 +175,7 @@ val resultNumber: Int = "3".match {
 
 ### Adding to your project
 Currently this library is not yet published to any repository.
-You can download pre-built library [from here](http://TODO add link).
+You can download pre-built jar [from here](https://github.com/Kurinnyi/Kotlin-Pattern-Matching/releases).
 Or download this sources and build it yourself with command `gradlew jar`.
 <br>
 After you got the jar, it is up to you how to manage this dependency. 
