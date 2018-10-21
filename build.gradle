@@ -34,4 +34,5 @@ jar {
         attributes 'Implementation-Title': 'Kotlin Pattern Matching',
                    'Implementation-Version': version
     }
+    from "LICENSE"
 }
