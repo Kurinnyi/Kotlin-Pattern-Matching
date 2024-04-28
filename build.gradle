@@ -1,8 +1,6 @@
-version = '0.1'
-group = "ua.kurinnyi.kotlin"
-
 buildscript {
-    ext.kotlin_version = '1.2.50'
+    ext.kotlin_version = '1.9.22'
+
     repositories {
         mavenCentral()
     }
@@ -11,7 +9,13 @@ buildscript {
     }
 }
 
-apply plugin: 'kotlin'
+plugins {
+    id 'java-library'
+    id "org.jetbrains.kotlin.jvm" version "1.9.22"
+}
+
+version = '0.1.1'
+group = "ua.kurinnyi.kotlin"
 
 repositories {
     mavenCentral()
@@ -19,15 +23,10 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    testImplementation 'junit:junit:4.11'
-    testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.10.0'
+    testImplementation 'junit:junit:4.13.1'
+    testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.25.3'
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 }
-
-task wrapper(type: Wrapper) {
-    gradleVersion = "4.1"
-}
-
 
 jar {
     manifest {
