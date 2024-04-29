@@ -12,13 +12,21 @@ buildscript {
 plugins {
     id 'java-library'
     id "org.jetbrains.kotlin.jvm" version "1.9.22"
+    id 'maven-publish'
 }
 
-version = '0.1.1'
-group = "ua.kurinnyi.kotlin"
+version = '0.1.2'
+group = 'ua.kurinnyi.kotlin'
+sourceCompatibility = 17
 
 repositories {
     mavenCentral()
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 }
 
 dependencies {
@@ -34,4 +42,25 @@ jar {
                    'Implementation-Version': version
     }
     from "LICENSE"
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = group
+            artifactId = 'pattern-matching'
+            version
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/kurinnyi/kotlin-pattern-matching"
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
 }
